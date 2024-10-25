@@ -1,0 +1,3 @@
+the zone parameter(-z) links to the zone in the irrigation.json
+
+python3 control.py -f -z zone_02 -d 10 &

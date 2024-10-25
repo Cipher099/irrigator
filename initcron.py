@@ -13,7 +13,7 @@
 #  0 0 1 * * cd /usr/local/bin/irrigator/logs && sh backup.sh
 #
 # 3. Add periodic weather check
-#  */15 * * * * cd /usr/local/bin/irrigator && sudo python3 openwx.py
+#  */15 * * * * cd /usr/local/bin/irrigator && sudo python3 accuwx.py
 #
 # *****************************************
 from crontab import CronTab
@@ -52,7 +52,7 @@ if (checkexists(comment_string, system_cron)==0):
     system_cron.write()
 
 # Cache weather information every 15 minutes
-command_string = "cd /usr/local/bin/irrigator && sudo python3 openwx.py"
+command_string = "cd /usr/local/bin/irrigator && sudo python3 accuwx.py"
 comment_string = "Irrigator-WxCache"
 
 if (checkexists(comment_string, system_cron)==0):

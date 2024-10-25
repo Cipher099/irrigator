@@ -4,8 +4,8 @@
 # irrigator - Weather Caching Script
 # *****************************************
 #
-# Description: This script caches the current 
-# weather in a JSON file for the webUI and 
+# Description: This script caches the current
+# weather in a JSON file for the webUI and
 # control scripts
 #
 # Uses Python3
@@ -46,7 +46,7 @@ def get_rain_history(wx_data):
     try:
         for index in range(history_days):
             date = f'{year_month}-{day - (index + 1)}'
-            url = f'https://api.openweathermap.org/data/3.0/onecall/day_summary?lat={lat}&lon={long}&date={date}&appid={wx_api_key}'
+            url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/301280?apikey={wx_api_key}&metric=true&details=true'
 
             if wx_data['units'] == 'F':
                 url += '&units=imperial'
@@ -59,13 +59,20 @@ def get_rain_history(wx_data):
             #print(f'  {parsed_json}')
 
             # If an error occurs, return 0
-            if 'cod' in parsed_json:
+            if 'DailyForecasts' not in parsed_json:
                 if parsed_json['cod'] == 401:
                     print(f'ERROR Retrieving History Data: {parsed_json["cod"]} {parsed_json["message"]}')
                     return 0.0
 
-            if 'precipitation' in parsed_json:
-                amount += parsed_json['precipitation']['total']
+            if 'DailyForecasts' in parsed_json:
+                for item in parsed_json['DailyForecasts']:
+                    # print(parsed_json['DailyForecasts'])
+                    print(item)
+                    # forecast = parsed_json['DailyForecasts'][item]
+                    # print(forecast)
+                    amount += (item['Day']['Rain']['Value'] +
+                               item['Night']['Rain']['Value'])
+                # amount += parsed_json['precipitation']['total']
 
         if amount > 0 and wx_data['units'] == 'F':
             # Convert mm to inches
@@ -103,19 +110,20 @@ def get_current_forecast(wx_data, wx_status={}):
         wx_status['dt'] = int(time.time())
 
         # Get Current Weather Data
-        url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={long}&appid={wx_api_key}'
+        url = f'http://dataservice.accuweather.com/currentconditions/v1/301280?apikey={wx_api_key}&details=true'
+        # url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={long}&appid={wx_api_key}'
         if wx_data['units'] == 'F':
-            url += '&units=imperial'
+            url += '&metric=false'
         else:
-            url += '&units=metric'
+            url += '&metric=true'
         print(f'  {url}')
         r = requests.get(url)
         parsed_json = json.loads(r.text)
         #print(f'  {parsed_json}')
 
         # If something went wrong with the request
-        if ('message' in parsed_json):
-            wx_status['summary'] = parsed_json['message']
+        if 'Temperature' not in parsed_json[0]:
+            wx_status['summary'] = parsed_json['Headline']['Text']
             wx_status['icon'] = '/static/img/wx-icons/unknown.png'
             wx_status['rain_current'] = 0.0
             wx_status['rain_history_list'] = []
@@ -124,51 +132,78 @@ def get_current_forecast(wx_data, wx_status={}):
             return (wx_status)
 
         # Get Current Temperature
-        if ('current' in parsed_json):
-            wx_status['temp_current'] = int(parsed_json['current']['temp'])
+        if 'Temperature' in parsed_json[0]:
+            wx_status['temp_current'] = parsed_json[0]['Temperature']['Metric']['Value']
         else:
-            wx_status['temp_current'] = 0
+            wx_status['temp_current'] = -1
 
         # Get current weather summary and icon
-        if ('weather' in parsed_json['current']):
-            wx_status['summary'] = parsed_json['current']['weather'][0]['main']
-            icon = parsed_json['current']['weather'][0]['icon']
+        if 'WeatherText' in parsed_json[0]:
+            wx_status['summary'] = parsed_json[0]['WeatherText']
+            icon = parsed_json[0]['WeatherIcon']
         else:
             wx_status['summary'] = "No Summary."
             icon = "00x"
 
+
         possible_icons = {}
 
         possible_icons = {
-            '01d': 'clear-day.png',
-            '01n': 'clear-night.png',
-            '02d': 'partly-cloudy-day.png',
-            '02n': 'partly-cloudy-night.png',
-            '03d': 'partly-cloudy-day.png',
-            '03n': 'partly-cloudy-night.png',
-            '04d': 'partly-cloudy-day.png',
-            '04n': 'partly-cloudy-night.png',
-            '09d': 'rain.png',
-            '09n': 'rain.png',
-            '10d': 'rain.png',
-            '10n': 'rain.png',
-            '11d': 'rain.png',
-            '11n': 'rain.png',
-            '13d': 'snow.png',
-            '13n': 'snow.png',
-            '50d': 'fog.png',
-            '50n': 'fog.png'
+            1: 'clear-day.png',
+            2: 'clear-day.png',
+            3: 'clear-day.png',
+            4: 'partly-cloudy-day.png',
+            5: 'partly-cloudy-day.png',
+            6: 'partly-cloudy-day.png',
+            7: 'partly-cloudy-day.png',
+            8: 'partly-cloudy-day.png',
+            9: 'rain.png',
+            10: 'rain.png',
+            11: 'fog.png',
+            12: 'rain.png',
+            13: 'rain.png',
+            14: 'rain.png',
+            15: 'rain.png',
+            16: 'rain.png',
+            17: 'rain.png',
+            18: 'rain.png',
+            19: 'rain.png',
+            20: 'clear-day.png',
+            21: 'clear-day.png',
+            22: 'clear-day.png',
+            23: 'clear-day.png',
+            24: 'clear-day.png',
+            25: 'clear-day.png',
+            26: 'clear-day.png',
+            27: 'clear-day.png',
+            28: 'clear-day.png',
+            29: 'clear-day.png',
+            30: 'clear-day.png',
+            31: 'clear-day.png',
+            32: 'clear-day.png',
+            33: 'clear-day.png',
+            34: 'clear-day.png',
+            35: 'clear-day.png',
+            36: 'clear-day.png',
+            37: 'clear-day.png',
+            38: 'clear-day.png',
+            39: 'clear-day.png',
+            40: 'clear-day.png',
+            41: 'clear-day.png',
+            42: 'clear-day.png',
+            43: 'clear-day.png',
+            44: 'clear-day.png',
         }
 
-        if (icon in possible_icons):
+        if icon in possible_icons:
             wx_status['icon'] = "/static/img/wx-icons/" + possible_icons[icon]
         else:
             wx_status['icon'] = "/static/img/wx-icons/unknown.png"
 
         # If rain in the last hour, get rain amount
         amount = 0.0
-        if ('rain' in parsed_json['current']):
-            amount = float(parsed_json['current']['rain']['1h'])
+        if ('Precip1hr' in parsed_json[0]):
+            amount = float(parsed_json[0]['Precip1hr']['Metric']['Value'])
             if amount > 0 and wx_data['units'] == 'F':
                 # Convert mm to inches
                 amount = round(amount * 0.0393701, 2)
@@ -177,21 +212,22 @@ def get_current_forecast(wx_data, wx_status={}):
 
         wx_status['rain_current'] = amount
 
-        if ('daily' in parsed_json):
-            # Get rain forecast (daily)
-            amount = 0.0
-            for day in range(forecast_days):
-                if ('rain' in parsed_json['daily'][day]):
-                    amount += float(parsed_json['daily'][day]['rain'])
+        # if ('daily' in parsed_json):
+        #     # Get rain forecast (daily)
+        #     amount = 0.0
+        #     for day in range(forecast_days):
+        #         if ('rain' in parsed_json['daily'][day]):
+        #             amount += float(parsed_json['daily'][day]['rain'])
+        #
+        #     if amount > 0 and wx_data['units'] == 'F':
+        #         # Convert mm to inches
+        #         amount = round(amount * 0.0393701, 2)
+        #     elif amount > 0:
+        #         amount = round(amount, 2)
+        #     wx_status['rain_forecast'] = amount
 
-            if amount > 0 and wx_data['units'] == 'F':
-                # Convert mm to inches
-                amount = round(amount * 0.0393701, 2)
-            elif amount > 0:
-                amount = round(amount, 2)
-            wx_status['rain_forecast'] = amount
-
-    except:
+    except Exception as e:
+        print(e)
         wx_status['summary'] = "Oops! Weather Lookup Error."
         wx_status['icon'] = '/static/img/wx-icons/unknown.png'
         wx_status['rain_current'] = 0.0

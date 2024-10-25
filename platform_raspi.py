@@ -24,8 +24,8 @@ class Platform:
 
 	def __init__(self, _outpins, relay_trigger=0):
 		self.outpins = _outpins # { 'zone_00' : 17, 'zone_01': 18, etc... }
-		GPIO.setwarnings(False)
-		GPIO.setmode(GPIO.BOARD)
+		GPIO.setwarnings(True)
+		GPIO.setmode(GPIO.BCM)
 		for item in self.outpins:
 			GPIO.setup(self.outpins[item], GPIO.OUT, initial=(not relay_trigger)) #Set the Zone Pins to 'Off'
 	

@@ -1,4 +1,4 @@
-# ![Logo](static/img/launcher-icon-2x.png) IrriGator
+# ![Logo](static/img/launcher-icon-2x.png) WaterPi
 
 ## Raspberry Pi Zero W or NTC CHIP based Smart Sprinkler Controller
 
@@ -217,7 +217,7 @@ Add cron entries for items
   @monthly cd /home/pi/irrigator/logs && sh backup.sh
 
  3. Add periodic weather check
-  */15 * * * * cd /home/pi/irrigator && sudo python3 openwx.py
+  */15 * * * * cd /home/pi/irrigator && sudo python3 accuwx.py
 
 I've included an easy script to take care of thsi for you:
 
@@ -330,7 +330,7 @@ To check the status of the script:
 
 >tail -f /var/log/chip_batt.log
 
-## Using IrriGator
+## Using WaterPi
 If you've configured the supervisord correctly, the application scripts should run upon a reboot.  Once the system is up and running, you should be able to access the WebUI via a browser on your smart phone, tablet or PC device.  
 
 Simply navigate to the IP address of your device for example (you can usually find the IP address of your device from looking at your router's configuration/status pages). My router typically assigns IPs with prefixes of 192.168.10.XXX.  I'll use examples on my home network here, so you'll see URLs like: http://192.168.10.42  Yours may look different depending on your routers firmware/manufacturer (i.e. 10.10.0.XXX, etc.)
@@ -338,7 +338,7 @@ Simply navigate to the IP address of your device for example (you can usually fi
 **Note:** It's highly recommended to set a static IP for your Pi in your router's configuration.  This will vary from manufacturer to manufacturer and is not covered in this guide.  A static IP ensures that you will be able to access your device reliably, without having to check your router for a new IP every so often.   
 
 #### The Dashboard
-The interface / webui is broken out several pages. The first is the dashboard view where you can check the current status of the system, and manually control schedules or zones. Clicking the IrriGator logo in the upper left will always take you back to the dashboard from whatever screen you are on.  
+The interface / webui is broken out several pages. The first is the dashboard view where you can check the current status of the system, and manually control schedules or zones. Clicking the WaterPi logo in the upper left will always take you back to the dashboard from whatever screen you are on.  
 
 ![Dashboard](docs/webui/irrigator-webui-dash.jpg)
 

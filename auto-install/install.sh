@@ -39,7 +39,7 @@ r=$(( r < 20 ? 20 : r ))
 c=$(( c < 70 ? 70 : c ))
 
 # Display the welcome dialog
-whiptail --msgbox --backtitle "Welcome" --title "IrriGator Automated Installer" "This installer will transform your SBC into a connected smart-sprinkler.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
+whiptail --msgbox --backtitle "Welcome" --title "WaterPi Automated Installer" "This installer will transform your SBC into a connected smart-sprinkler.  NOTE: This installer is intended to be run on a fresh install of Raspbian Lite Stretch +.  This script is currently in Alpha testing so there may be bugs." ${r} ${c}
 
 # Starting actual steps for installation
 clear

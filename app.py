@@ -9,6 +9,7 @@
 # *****************************************
 
 from flask import Flask, request, render_template, make_response
+import logging
 import time
 import datetime
 import os
@@ -21,6 +22,8 @@ from common import *
 pathtoirrigator = "/usr/local/bin/irrigator"
 
 app = Flask(__name__)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 @app.route('/<action>', methods=['POST','GET'])
 @app.route('/', methods=['POST','GET'])
@@ -53,6 +56,7 @@ def dashboard(action=None):
 					execute_string = "python3 control.py -f -s " + str(response['startsched'] + " &") # For running on None
 				else:
 					execute_string = "sudo python3 control.py -f -s " + str(response['startsched'] + " &")  # For running on CHIP or RasPi
+				print(execute_string)
 				os.system(execute_string)
 				start_delay = False
 				while(start_delay == False):
@@ -386,26 +390,26 @@ def settings(action=None):
 		detail = ""
 		response = request.form
 
-		if('zone_name' in response):
-			if(str(response['zone_name']) in json_data_dict.get('zonemap', {})):
-				if ('delete' in response):
+		if 'zone_name' in response:
+			if str(response['zone_name']) in json_data_dict.get('zonemap', {}):
+				if 'delete' in response:
 					del json_data_dict['zonemap'][str(response['zone_name'])]
 
 				else:
-					if ('gpio_pin' in response):
+					if 'gpio_pin' in response:
 						#write to GPIO pin if not empty
-						if(response['gpio_pin']!=''):
+						if response['gpio_pin']!= '':
 							json_data_dict['zonemap'][str(response['zone_name'])]['GPIO_mapping'] = int(response['gpio_pin'])
 
-					if ('enabled' in response):
+					if 'enabled' in response:
 						#write to enabled if not empty
-						if(response['enabled']=='on'):
+						if response['enabled']== 'on':
 							json_data_dict['zonemap'][str(response['zone_name'])]['enabled'] = True
 						else:
 							json_data_dict['zonemap'][str(response['zone_name'])]['enabled'] = False
 
-					if ('new_name' in response):
-						if (response['new_name'] != ''):
+					if 'new_name' in response:
+						if response['new_name'] != '':
 							# Check if name already taken.
 							if(str(response['new_name']) == str(response['zone_name'])):
 								# New Name is the same as old name, so do nothing
@@ -437,7 +441,7 @@ def settings(action=None):
 				detail = detail + "Yo dawg, we couldn't find the zone you wanted to modify.\n"
 
 
-		if(success==True):
+		if success:
 			print('Success:  Writing JSON data to file.')
 			WriteJSON(json_data_dict)  # There be dragons - enable only when tested.
 
@@ -589,8 +593,8 @@ def settings(action=None):
 
 		if(success==True):
 			WriteJSON(json_data_dict)
-			if(update_weather_data):
-				execute_string = "python3 openwx.py" # Get weather after updating API Key or Location
+			if update_weather_data:
+				execute_string = "python3 accuwx.py" # Get weather after updating API Key or Location
 				os.system(execute_string) # Execute
 
 	elif (request.method == 'POST') and (action == 'modifygate'):
@@ -601,7 +605,7 @@ def settings(action=None):
 		if('zone_gate' in response):
 			print('zone_gate selected')
 			if(response['zone_gate'] != ''):
-				json_data_dict['settings']['zone_gate'] = int(response['zone_gate'])
+				json_data_dict['settings']['zone_gate'] = response['zone_gate']
 				WriteJSON(json_data_dict)
 			else:
 				success = False
@@ -627,6 +631,7 @@ def admin(action=None):
 			execute_string = "python3 control.py -i &"  # For running on None
 		else:
 			execute_string = "sudo python3 control.py -i &"  # For running on CHIP or RasPi
+		print(execute_string)
 		os.system(execute_string) # Initialize Relays
 		# Remove all Schedules from CronTab
 		for schedule_name, schedule_data in json_data_dict['schedules'].items():
@@ -652,6 +657,7 @@ def admin(action=None):
 			execute_string = "python3 control.py -i &"  # For running on None
 		else:
 			execute_string = "sudo python3 control.py -i &"  # For running on CHIP or RasPi
+		print(execute_string)
 		os.system(execute_string) # Initialize Relays
 
 		WriteJSON(json_data_dict)
@@ -735,7 +741,7 @@ def build_CRON_string(sched_dict):
 
 def update_crontab(json_data_dict, sched_name, action):
 	errorcode = 0
-	system_cron = CronTab(user='root')
+	system_cron = CronTab('* * * * *')
 	entry = 0
 
 	if(action == 'add'):

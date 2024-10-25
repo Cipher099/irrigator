@@ -12,7 +12,8 @@ import time
 import json
 import datetime
 import io
-from cron_descriptor import get_description, ExpressionDescriptor
+# from cron_descriptor import get_description, ExpressionDescriptor
+
 
 # Control uses this
 def ReadJSON(json_data_filename="irrigator.json", type="settings"):
@@ -22,91 +23,88 @@ def ReadJSON(json_data_filename="irrigator.json", type="settings"):
         json_data_dict = json.loads(json_data_string)
         json_data_file.close()
     except(IOError, OSError):
-		# File not found, write defaults
+        # File not found, write defaults
         event = f"Exception occurred when reading {json_data_filename}.  File not found.  Creating the file with default settings."
         WriteLog(event)
-        if type == 'weather': 
+        if type == 'weather':
             json_data_dict = create_wx_json()
             WriteJSON(json_data_dict, json_data_filename='wx_status.json')
-        else: 
+        else:
             json_data_dict = create_json()
             WriteJSON(json_data_dict)
     except(ValueError):
-		# A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
+        # A ValueError Exception occurs when multiple accesses collide, this code attempts a retry.
         event = f'Exception occurred when reading {json_data_filename}.  Value Error Exception - JSONDecodeError.  Retrying.'
         WriteLog(event)
         json_data_file.close()
-		# Retry Reading JSON
+        # Retry Reading JSON
         json_data_dict = ReadJSON(json_data_filename, type)
 
     if type == 'settings':
         # Check relay trigger which was added post-initial release 
         if 'relay_trigger' not in json_data_dict['settings'].keys():
             relay_trigger = 0  # Set default to active low (0) triggered relays 
-            json_data_dict['settings']['relay_trigger'] = 0  # set the default to active low (0) triggered in settings, and save
+            json_data_dict['settings'][
+                'relay_trigger'] = 0  # set the default to active low (0) triggered in settings, and save
             WriteJSON(json_data_dict)
         # Check if history and forecast days are set
         if 'history_days' not in json_data_dict['wx_data']:
-            json_data_dict['wx_data']['history_days'] = 2 
+            json_data_dict['wx_data']['history_days'] = 2
             json_data_dict['wx_data']['forecast_days'] = 2
             WriteJSON(json_data_dict)
             wx_data = create_wx_json()
             WriteJSON(wx_data, json_data_filename='wx_status.json')
-    
-    return(json_data_dict)
+
+    return (json_data_dict)
+
 
 # Control uses this
 def WriteJSON(json_data_dict, json_data_filename="irrigator.json"):
-	json_data_string = json.dumps(json_data_dict, indent=2)
-	with open(json_data_filename, 'w') as settings_file:
-	    settings_file.write(json_data_string)
+    json_data_string = json.dumps(json_data_dict, indent=2)
+    with open(json_data_filename, 'w') as settings_file:
+        settings_file.write(json_data_string)
+
 
 def WriteLog(event):
-	# *****************************************
-	# Function: WriteLog
-	# Input: str event
-	# Description: Write event to event.log
-	#  Event should be a string.
-	# *****************************************
-	now = str(datetime.datetime.now())
-	now = now[0:19] # Truncate the microseconds
+    # *****************************************
+    # Function: WriteLog
+    # Input: str event
+    # Description: Write event to event.log
+    #  Event should be a string.
+    # *****************************************
+    now = str(datetime.datetime.now())
+    now = now[0:19]  # Truncate the microseconds
 
-	logfile = open("events.log", "a")
-	logfile.write(now + ' ' + event + '\n')
-	logfile.close()
+    logfile = open("events.log", "a")
+    logfile.write(now + ' ' + event + '\n')
+    logfile.close()
+
 
 def create_json():
-    irrigator = {}
-
-    irrigator['controls'] = {
-        'manual_override': False, # For stopping any current activity
-        'active': False # Control.py process is currently active/running
-    }
-
-    irrigator['settings'] = {
+    irrigator = {'controls': {
+        'manual_override': False,  # For stopping any current activity
+        'active': False  # Control.py process is currently active/running
+    }, 'settings': {
         'target_sys': 'None',  # Select CHIP, RasPi or test
-        'zone_gate': 29,       # This is the GPIO pin responsible for gating the sprinkler pins during power-up, shutdown, and reboot
-        'relay_trigger' : 0    # 0 for active low relays, 1 for active high relays 
-    }
-
-    irrigator['wx_data'] = {
-        'apikey': '123456789abcdefghijklmnopqrstuvxyz', # OpenWeatherMap APIkey
+        'zone_gate': 29,
+        # This is the GPIO pin responsible for gating the sprinkler pins during power-up, shutdown, and reboot
+        'relay_trigger': 0  # 0 for active low relays, 1 for active high relays
+    }, 'wx_data': {
+        'apikey': '123456789abcdefghijklmnopqrstuvxyz',  # OpenWeatherMap APIkey
         'lat': '44.0611151',
-        'long': '-121.3846839', 
-        'location' : 'Bend, OR',
-        'temp_enable' : True,
+        'long': '-121.3846839',
+        'location': 'Bend, OR',
+        'temp_enable': True,
         'min_temp': 32,
         'max_temp': 100,
-        'precip' : 0.2,  # Max Precipitation Cancel Irrigation
+        'precip': 0.2,  # Max Precipitation Cancel Irrigation
         'history_enable': True,  # Disable Weather Restrictions (i.e. Force)
         'history_days': 2,  # Number of days of history to track precipitation
         'forecast_days': 2,  # Number of days to forecast precipitation
         'forecast_enable': True,  # Enable forecast checking
         'forecast_history_enable': True,  # Enable forecast + history > precip max, cancel irrigation
         'units': 'F'
-    }
-
-    irrigator['zonemap'] = {
+    }, 'zonemap': {
         'zone_01': {
             'GPIO_mapping': 31,
             'enabled': True,
@@ -142,29 +140,7 @@ def create_json():
             'enabled': False,
             'active': False
         },
-    }
-    # CRON Format
-    # +---------- minute (0 - 59)
-    # | +-------- hour (0 - 23)
-    # | | +------ day of month (1 - 31)
-    # | | | +---- month (1 - 12)
-    # | | | | +-- day of week (0 - 6 => Sunday - Saturday, or
-    # | | | | |                1 - 7 => Monday - Sunday)
-    # * * * * * command to be executed
-
-    # Daily
-    # m h * * * command
-
-    # Even Days
-    # m h 2-30/2 * * command
-
-    # Odd Days
-    # m h 1-31/2 * * command
-
-    # Custom Days
-    # m h * * SUN,MON,TUE,WED,THU,FRI,SAT command
-
-    irrigator['schedules'] = {
+    }, 'schedules': {
         'FrontYard': {
             'start_time': {
                 'enabled': False,
@@ -210,28 +186,52 @@ def create_json():
                 }
             }
         }
-    }
+    }}
+
+    # CRON Format
+    # +---------- minute (0 - 59)
+    # | +-------- hour (0 - 23)
+    # | | +------ day of month (1 - 31)
+    # | | | +---- month (1 - 12)
+    # | | | | +-- day of week (0 - 6 => Sunday - Saturday, or
+    # | | | | |                1 - 7 => Monday - Sunday)
+    # * * * * * command to be executed
+
+    # Daily
+    # m h * * * command
+
+    # Even Days
+    # m h 2-30/2 * * command
+
+    # Odd Days
+    # m h 1-31/2 * * command
+
+    # Custom Days
+    # m h * * SUN,MON,TUE,WED,THU,FRI,SAT command
 
     for index_a, index_b in irrigator['schedules'].items():
-        temp_cron_str = str(index_b['start_time']['minute']) + " " + str(index_b['start_time']['hour']) + " " + index_b['start_time']['day_of_month'] + " " + index_b['start_time']['month'] + " " + index_b['start_time']['day_of_week']
+        temp_cron_str = str(index_b['start_time']['minute']) + " " + str(index_b['start_time']['hour']) + " " + \
+                        index_b['start_time']['day_of_month'] + " " + index_b['start_time']['month'] + " " + \
+                        index_b['start_time']['day_of_week']
         index_b['start_time']['cron_string'] = temp_cron_str
-        index_b['start_time']['human_readable'] = get_description(temp_cron_str)
+        # index_b['start_time']['human_readable'] = get_description(temp_cron_str)
 
-    return(irrigator)
+    return (irrigator)
+
 
 def create_wx_json():
     wx_status = {}
     wx_status = {
-		'summary' : 'Nothing to Report',
-		'icon' : '/static/img/wx-icons/unknown.png',
-		'updated' : '', 
-        'rain_history_total' : 0,
-        'rain_current' : 0,
-		'rain_forecast' : 0.0,
-        'temp_current' : 0,
-        'dt' : int(time.time())
-	}
-    return(wx_status)
+        'summary': 'Nothing to Report',
+        'icon': '/static/img/wx-icons/unknown.png',
+        'updated': '',
+        'rain_history_total': 0,
+        'rain_current': 0,
+        'rain_forecast': 0.0,
+        'temp_current': 0,
+        'dt': int(time.time())
+    }
+    return (wx_status)
 
 
 # **************************************
@@ -239,14 +239,14 @@ def create_wx_json():
 # in post: https://raspberrypi.stackexchange.com/questions/5100/detect-that-a-python-program-is-running-on-the-pi
 # **************************************
 def is_raspberry_pi():
-	"""
+    """
 	Check if device is a Raspberry Pi
 
 	:return: True if Raspberry Pi. False otherwise
 	"""
-	try:
-		with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-			if 'raspberry pi' in m.read().lower(): return True
-	except Exception:
-		pass
-	return False
+    try:
+        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+            if 'raspberry pi' in m.read().lower(): return True
+    except Exception:
+        pass
+    return False

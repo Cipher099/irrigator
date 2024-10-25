@@ -21,6 +21,7 @@
 
 class Platform:
     def __init__(self, _outpins, relay_trigger=0):
+        print(f'_outpins: {_outpins}')
         self.outpins = _outpins # { 'zone_00' : 17, 'zone_01': 18, etc... }
         self.current = {}
         for item in self.outpins:

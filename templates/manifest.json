@@ -1,6 +1,6 @@
 {
-  "short_name": "IrriGator",
-  "name": "IrriGator - Smart Sprinkler Control",
+  "short_name": "WaterPi",
+  "name": "WaterPi - Smart Sprinkler Control",
   "icons": [
     {
       "src": "{{ url_for('static', filename='img/launcher-icon-2x.png') }}",
